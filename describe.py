@@ -9,11 +9,11 @@ import random
 import matplotlib.pyplot as plt
 
 
+'''
+:param data: 未经处理的初始数据集
+:return: 处理好的数据集
+'''
 def dealdata(data):
-    '''
-    :param data: 未经处理的初始数据集
-    :return: 处理好的数据集
-    '''
     global col
     #     data = data.drop(['capital_reserve_fund','operating_revenue','gross_profit_margin','inc_total_revenue_year_on_year'],axis=1)
     col = [c for c in data.columns if c not in ['total_assets', 'total_liability', 'Return', 'Unnamed: 0', 'Y_bin']]
@@ -27,18 +27,17 @@ def dealdata(data):
     return data
 
 
+'''
+用来获取数据
+:param startdate:需要获取的数据开始日期
+:param enddate:需要获取的数据结束日期
+:param window:涨幅分类的阈值百分比，大于window的为正类，小于为负类
+:param label_type:使用哪种分类算法。1为按涨幅比例分，0为按涨跌与否分
+:param stockindex:哪个股票池的数据
+:param stockpool_type:使用哪种股票池。1为上证指数等大股票池，0为行业股票池
+:return: 列为各因子的值，行为startdate当天的所有股票代码
+'''
 def dataset(startdate, enddate, window, label_type, stockindex, stockpool_type):
-    '''
-    用来获取数据
-
-    :param startdate:需要获取的数据开始日期
-    :param enddate:需要获取的数据结束日期
-    :param window:涨幅分类的阈值百分比，大于window的为正类，小于为负类
-    :param label_type:使用哪种分类算法。1为按涨幅比例分，0为按涨跌与否分
-    :param stockindex:哪个股票池的数据
-    :param stockpool_type:使用哪种股票池。1为上证指数等大股票池，0为行业股票池
-    :return: 列为各因子的值，行为startdate当天的所有股票代码
-    '''
     fdate = startdate
     if stockpool_type == 1:
         stock_set = get_index_stocks(stockindex, fdate)  # 综合指数
@@ -113,17 +112,14 @@ def dataset(startdate, enddate, window, label_type, stockindex, stockpool_type):
     return df
 
 
+'''
+:param random_seed: 最优的模型的随机种子编号
+:param s: 图的位置
+:param train_data: 训练数据集
+'''
 def print_(random_seed, s, train_data):
-    '''
-
-    :param random_seed: 最优的模型的随机种子编号
-    :param s: 图的位置
-    :param train_data: 训练数据集
-
-    '''
-
     # 十颗树  太少
-    rfc = RandomForestClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=random_seed)
+    rfc = RandomForestClassifier(n_estimators=500, max_depth=None, min_samples_split=2, random_state=random_seed)
     rfc.fit(train_data[col], train_data['Y_bin'])
     importances_result_dict = {}
     importance = rfc.feature_importances_
@@ -140,13 +136,12 @@ def print_(random_seed, s, train_data):
     plt.bar(range(len(col)), score)
 
 
+'''
+:param train_data: 训练数据集
+:param test_data: 测试数据集
+:return: 最优模型的随机种子编号
+'''
 def train_max_index(train_data, test_data):
-    '''
-
-    :param train_data: 训练数据集
-    :param test_data: 测试数据集
-    :return: 最优模型的随机种子编号
-    '''
     x = []
     y = []
 
@@ -154,7 +149,7 @@ def train_max_index(train_data, test_data):
     max_zhenyang = 0
     for i in range(100):
 
-        rfc = RandomForestClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=i)
+        rfc = RandomForestClassifier(n_estimators=500, max_depth=None, min_samples_split=2, random_state=i)
         rfc.fit(train_data[col], train_data['Y_bin'])
         t1 = rfc.predict(test_data[col])
 
@@ -165,14 +160,14 @@ def train_max_index(train_data, test_data):
     return max_index
 
 
+'''
+:param prediction: 预测标志
+:param test: 真实标志
+:param trueclass: 视为真的类别值
+:param flaseclass: 视为假的类别值
+:return: 真阳率，假阳率
+'''
 def ROC(prediction, test, trueclass=1, flaseclass=0):
-    '''
-    :param prediction: 预测标志
-    :param test: 真实标志
-    :param trueclass: 视为真的类别值
-    :param flaseclass: 视为假的类别值
-    :return: 真阳率，假阳率
-    '''
     # 这里写的字母表示意义与教材的不一致，因此后面计算真阳率时不能用书上的公式
     TP = 0  # 预测真为真
     FN = 0  # 预测真为假
@@ -195,15 +190,21 @@ def ROC(prediction, test, trueclass=1, flaseclass=0):
     #     return TP / (TP + FN), FP / (FP + TN)
     return TP / (TP + FN)
 
-
+'''
+:param stockindex:使用哪个股票池的数据
+:param train_startday:使用的训练数据开始的日期
+:param train_endday:使用的训练数据结束的日期
+:param test_endday:使用的测试数据结束的日期
+:param label_type:使用哪种分类算法。1为按涨幅比例分，0为按涨跌与否分
+:param stockpool_type:使用哪种股票池。1为上证指数等大股票池，0为行业股票池
+'''
 def main_(stockindex, train_startday, train_endday, test_endday, label_type, stockpool_type):
     test_startday = train_endday # 赋值测试开始时间为训练结束时间
 
     train_data = dealdata(dataset(train_startday, train_endday, 70, label_type, stockindex, stockpool_type))
     test_data = dealdata(dataset(test_startday, test_endday, 70, label_type, stockindex, stockpool_type))
 
-    # 这里的col处理好之后没有用？
-    col = [c for c in train_data.columns if c not in ['Return', 'Unnamed: 0', 'Y_bin']]
+    # 训练随机森林模型并得到表现最好的一棵树
     max_index = train_max_index(train_data, test_data)
 
     plt.title(train_startday + ' ' + test_endday + ' ' + stockindex)
