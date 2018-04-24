@@ -7,7 +7,13 @@ from sklearn import svm
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import jqdata
+import json
+from six import StringIO
+from jqlib.technical_analysis import *
 
+# 定义全局变量
+treeNum = 100
 
 '''
 :param data: 未经处理的初始数据集
@@ -113,13 +119,23 @@ def dataset(startdate, enddate, window, label_type, stockindex, stockpool_type):
 
 
 '''
+返回寒假处理好的那份数据
+'''
+def getData_hmf():
+    body = read_file("final.csv")
+    df = pd.read_csv(StringIO(body))
+    df.drop('Unnamed: 0',axis=1, inplace=True)
+    return df
+
+
+'''
 :param random_seed: 最优的模型的随机种子编号
 :param s: 图的位置
 :param train_data: 训练数据集
 '''
 def print_(random_seed, s, train_data):
     # 十颗树  太少
-    rfc = RandomForestClassifier(n_estimators=500, max_depth=None, min_samples_split=2, random_state=random_seed)
+    rfc = RandomForestClassifier(n_estimators=treeNum, max_depth=None, min_samples_split=2, random_state=random_seed)
     rfc.fit(train_data[col], train_data['Y_bin'])
     importances_result_dict = {}
     importance = rfc.feature_importances_
@@ -149,7 +165,7 @@ def train_max_index(train_data, test_data):
     max_zhenyang = 0
     for i in range(100):
 
-        rfc = RandomForestClassifier(n_estimators=500, max_depth=None, min_samples_split=2, random_state=i)
+        rfc = RandomForestClassifier(n_estimators=treeNum, max_depth=None, min_samples_split=2, random_state=i)
         rfc.fit(train_data[col], train_data['Y_bin'])
         t1 = rfc.predict(test_data[col])
 

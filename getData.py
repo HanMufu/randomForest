@@ -403,15 +403,18 @@ def getData():
     
 # 下载沪深300历史数据，并计算每季度盈利率，用于打标签
 def getHS300hist():
-    df = attribute_history('000300.XSHG', 48, '60d')
+    #df = attribute_history('000300.XSHG', 48, '60d')
+    body = read_file("HS300_2006_2017.csv")
+    df = pd.read_csv(StringIO(body))
+    df.drop('Unnamed: 0',axis=1, inplace=True)
     df['gain_ratio'] = 0.0
     for i in range(0, len(df)-1):
-        df.iloc[i+1, 6] = df.iloc[i+1, 1] / df.iloc[i, 1] - 1
-    write_file('沪深300历史指数.csv', df.to_csv(), append=False)
+        df.iloc[i+1, 2] = df.iloc[i+1, 1] / df.iloc[i, 1] - 1
+    write_file('HS300_2006_2017.csv', df.to_csv(), append=False)
 
 # 根据当季度首日开盘价格与最后一天收盘价格计算收益率
 def calculate_gainRatio():
-    body = read_file("沪深300历史指数.csv")
+    body = read_file("HS300_2006_2017.csv")
     HSindex = pd.read_csv(StringIO(body))
     HSindex.drop('Unnamed: 0',axis=1, inplace=True)
     temp = 0
@@ -465,8 +468,8 @@ def calculate_gainRatio():
                 else:
                     log.info('ok %s' % (myCode))
                 # 计算收益率
-                gain_ratio = closePrice / openPrice - 1 - HSindex.iloc[temp, 6]
-                df.iloc[i, 52] = gain_ratio
+                gain_ratio = closePrice / openPrice - 1 - HSindex.iloc[temp, 2]
+                df.iloc[i, 237] = gain_ratio
                 # if gain_ratio >= 0:
                 #     df.iloc[i, 9] = 1
                 # else:
@@ -527,7 +530,7 @@ def tagLabel():
     count = 0 #计数器
     # 标记正类
     for i in range(0, len(df)):
-        df.iloc[i, 53] = 1
+        df.iloc[i, 238] = 1
         count = count + 1
         if count == number:
             break
@@ -538,7 +541,7 @@ def tagLabel():
             count = count + 1
             continue
         else:
-            df.iloc[i, 53] = 0
+            df.iloc[i, 238] = 0
             count = count + 1
     write_file('tagedALLDATA.csv', df.to_csv(), append=False)
     
@@ -565,27 +568,27 @@ def tagIndustry():
     for i in range(0, len(df)):
         myCode = (df.loc[[i], 'code']).iloc[0]
         if myCode in HY001:
-            df.iloc[i, 54] = 'HY001'
+            df.iloc[i, 239] = 'HY001'
         elif myCode in HY002:
-            df.iloc[i, 54] = 'HY002'
+            df.iloc[i, 239] = 'HY002'
         elif myCode in HY003:
-            df.iloc[i, 54] = 'HY003'
+            df.iloc[i, 239] = 'HY003'
         elif myCode in HY004:
-            df.iloc[i, 54] = 'HY004'
+            df.iloc[i, 239] = 'HY004'
         elif myCode in HY005:
-            df.iloc[i, 54] = 'HY005'
+            df.iloc[i, 239] = 'HY005'
         elif myCode in HY006:
-            df.iloc[i, 54] = 'HY006'
+            df.iloc[i, 239] = 'HY006'
         elif myCode in HY007:
-            df.iloc[i, 54] = 'HY007'
+            df.iloc[i, 239] = 'HY007'
         elif myCode in HY008:
-            df.iloc[i, 54] = 'HY008'
+            df.iloc[i, 239] = 'HY008'
         elif myCode in HY009:
-            df.iloc[i, 54] = 'HY009'
+            df.iloc[i, 239] = 'HY009'
         elif myCode in HY010:
-            df.iloc[i, 54] = 'HY010'
+            df.iloc[i, 239] = 'HY010'
         elif myCode in HY011:
-            df.iloc[i, 54] = 'HY011'
+            df.iloc[i, 239] = 'HY011'
     write_file('tagedALLDATA.csv', df.to_csv(), append=False)
 
 def test11():
